@@ -96,12 +96,25 @@ all: $(OBJS) $(PROJECT).elf  $(PROJECT).hex $(PROJECT).bin
 %bin: %elf
 	$(BIN)  $< $@
 	
-flash: $(PROJECT).bin
+flash_openocd: $(PROJECT).bin
+	openocd -s ~/EmbeddedArm/openocd-bin/share/openocd/scripts/ -f interface/stlink-v2.cfg -f target/stm32f0x_stlink.cfg -c "init" -c "reset halt" -c "sleep 100" -c "wait_halt 2" -c "flash write_image erase $(PROJECT).bin 0x08000000" -c "sleep 100" -c "verify_image $(PROJECT).bin 0x08000000" -c "sleep 100" -c "reset run" -c shutdown
+
+flash_stlink: $(PROJECT).bin
 	st-flash write $(PROJECT).bin 0x8000000
-       
-debug: $(PROJECT).elf
+
+erase_openocd:
+	openocd -s ~/EmbeddedArm/openocd-bin/share/openocd/scripts/ -f interface/stlink-v2.cfg -f target/stm32f0x_stlink.cfg -c "init" -c "reset halt" -c "sleep 100" -c "stm32f1x mass_erase 0" -c "sleep 100" -c shutdown 
+
+erase_stlink:
+	st-flash erase
+
+debug_openocd: $(PROJECT).elf flash_openocd
+	xterm -e openocd -s ~/EmbeddedArm/openocd-bin/share/openocd/scripts/ -f interface/stlink-v2.cfg -f target/stm32f0x_stlink.cfg -c "init" -c "halt" -c "reset halt" &
+	$(GDBTUI) --eval-command="target remote localhost:3333" $(PROJECT).elf 
+
+debug_stlink: $(PROJECT).elf
 	xterm -e st-util &
-	$(GDBTUI) --eval-command="target remote localhost:4242" $(PROJECT).elf 
+	$(GDBTUI) --eval-command="target remote localhost:4242"  $(PROJECT).elf -ex 'load'
 		
 clean:
 	-rm -rf $(OBJS)
