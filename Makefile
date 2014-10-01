@@ -81,19 +81,19 @@ LDFLAGS = $(MCFLAGS) -g -gdwarf-2 -mthumb -nostartfiles -T$(LINKER_SCRIPT) -Wl,-
 all: $(OBJS) $(PROJECT).elf  $(PROJECT).hex $(PROJECT).bin
 	$(TRGT)size $(PROJECT).elf
  
-%o: %c
+%.o: %.c
 	$(CC) -c $(CPFLAGS) -I . $(INCDIR) $< -o $@
 
-%o: %s
+%.o: %.s
 	$(AS) -c $(ASFLAGS) $< -o $@
 
-%elf: $(OBJS)
+%.elf: $(OBJS)
 	$(CC) $(OBJS) $(LDFLAGS) $(LIBS) -o $@
 
-%hex: %elf
+%.hex: %.elf
 	$(HEX) $< $@
 	
-%bin: %elf
+%.bin: %.elf
 	$(BIN)  $< $@
 	
 flash_openocd: $(PROJECT).bin
